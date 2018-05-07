@@ -69,7 +69,7 @@ def get_request(url, headers, data=None):
     url = str(url)
     headers = dict(headers)
     if data:  # POST: read data from and write data to server
-        data = urllib.parse.urlencode(data).encode('utf-8')
+        data = urllib.parse.urlencode(data).encode(encoding="utf-8", errors="replace")
     else:     # GET:  read data from server only
         pass
 
@@ -77,21 +77,21 @@ def get_request(url, headers, data=None):
     open_url = urllib.request.urlopen(set_request)
     server_response = json.loads(open_url.read().decode('utf-8'))  # native Python objects
 
-    return server_response
+    return server_response if server_response else None
 
 
-def read_api(api_request, api_find, *criteria):
-    ''' Returns the first value from an API request that matches the most criteria. '''
+def read_api(api_request, return_key, *search_pairs):
+    ''' Returns the first value from an API request that matches the maximum number of key/value pairs. '''
 
     index = 0  # iteration position of the API dictionary
     maxmatches = 0  # maximum number of dictionary entries matching criteria
-    best_index = 0  # index of the API dictionary wiht best matching criteria
+    best_index = 0  # index of the API dictionary with best matching criteria
 
     for api_dictionary in api_request:  # iterate through API dictionaries
         matches = []
         for api_key, api_value in api_dictionary.items():  # iterate through API key/value pairs
-            for key, value in criteria:
-                if api_key == key and api_value == value:
+            for search_key, search_value in search_pairs:
+                if api_key == search_key and api_value == search_value:
                     matches.append(True)
                 else:
                     matches.append(False)
@@ -100,4 +100,4 @@ def read_api(api_request, api_find, *criteria):
             maxmatches = matches.count(True)
         index += 1
 
-    return api_request[best_index][api_find]
+    return api_request[best_index][return_key] if maxmatches else None
