@@ -2,7 +2,7 @@
 
 '''
 CCP ESI (basic module to communicate with the EVE Swagger Interface)
-Copyright (C) 2017 Christian Rickert <mail@crickert.de>
+Copyright (C) 2018 Christian Rickert <mail@crickert.de>
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
@@ -19,8 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # imports
 
+import http.server
 import json
-import urllib
+import urllib.request
 import http
 
 
