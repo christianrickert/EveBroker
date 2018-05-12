@@ -17,8 +17,8 @@ The minimum software requirements for EveBroker are current versions of:
 ## Softare download
 The latest versions of EveBroker can be found on the repository's [releases](https://github.com/crickert1234/EveBroker/releases) page.
 
-## ISK donations
-If you like the software and want to support its development, please feel free to donate ISK to [Cerian Alderoth](https://imageserver.eveonline.com/Character/91268079_1024.jpg) in Eve Online.
+## ISK payments
+If you like the software and want to support its development, please feel free to make a payment to [Cerian Alderoth](https://imageserver.eveonline.com/Character/91268079_1024.jpg) in Eve Online.
 
 ## Development & Bug reporting
 If you would like to participate in the development of EveBroker, please [fork this repository](https://help.github.com/articles/fork-a-repo) to your GitHub account. In order to report a problem with EveBroker, please login to your GitHub account and create a [new issue](https://help.github.com/articles/creating-an-issue/) in this repository.
