@@ -20,6 +20,9 @@ The latest versions of EveBroker can be found on the repository's [releases](htt
 ## ISK payments
 If you like the software and want to support its development, please feel free to make a payment to [Cerian Alderoth](https://imageserver.eveonline.com/Character/91268079_1024.jpg) in Eve Online.
 
+## Limitations & Known issues
+There is currently no route provided by the [ESI](https://esi.evetech.net/ui/) to reliably identify the NPC faction of a NPC corp, see [esi-issues #917](https://github.com/ccpgames/esi-issues/issues/917) (feature request). However, EveBroker uses a workaround to at least identify the NPC factions of founding NPC corporations.
+
 ## Development & Bug reporting
 If you would like to participate in the development of EveBroker, please [fork this repository](https://help.github.com/articles/fork-a-repo) to your GitHub account. In order to report a problem with EveBroker, please login to your GitHub account and create a [new issue](https://help.github.com/articles/creating-an-issue/) in this repository.
 
