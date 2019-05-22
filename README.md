@@ -1,7 +1,7 @@
 # EveBroker
 **Calculate your profit margin from buy to sell orders based on market skills and entity standings**
 
-[![SSO](https://web.ccpgamescdn.com/eveonlineassets/developers/eve-sso-login-black-small.png)](https://eveonline-third-party-documentation.readthedocs.io/en/latest/)
+[![SSO](https://web.ccpgamescdn.com/eveonlineassets/developers/eve-sso-login-black-small.png)]( https://github.com/esi/esi-docs/)
 
 The software is available under the [GNU General Public License 2](https://github.com/crickert1234/EveBroker/blob/master/LICENSE).
 
