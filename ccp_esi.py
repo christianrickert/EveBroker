@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-'''
+"""
 CCP ESI (basic module to communicate with the EVE Swagger Interface)
-Copyright (C) 2018 Christian Rickert <mail@crickert.de>
+Copyright (C) 2019 Christian Rickert <mail@crickert.de>
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-'''
+"""
 
 
 # imports
@@ -32,21 +32,21 @@ CLIENT_REQUEST = ""  # contains the authentication code
 # functions
 
 def get_listener(address, port):
-    ''' Starts a HTTP server that returns an incoming request to a given port as string. '''
+    """ Starts a HTTP server that returns an incoming request to a given port as string. """
 
     http.server.HTTPServer.timeout = 120  # seconds
 
     class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
-        ''' Overriding the basic logging function to get the client's request. '''
+        """ Overriding the basic logging function to get the client's request. """
 
         global CLIENT_REQUEST
 
         def log_message(self, format, *args):  # overriding to extract client request
             global CLIENT_REQUEST
-            CLIENT_REQUEST, *rest = args
+            CLIENT_REQUEST, *_ = args
 
         def do_GET(self):
-            ''' Handles the output stream for writing a response back to the client.  '''
+            """ Handles the output stream for writing a response back to the client. """
             self.send_response(http.HTTPStatus.OK)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
@@ -63,7 +63,7 @@ def get_listener(address, port):
 
 
 def get_request(url, headers, data=None):
-    ''' Performs GET and POST requests and returns the server's response with dictionaries. '''
+    """ Performs GET and POST requests and returns the server's response with dictionaries. """
 
     url = str(url)
     headers = dict(headers)
@@ -80,7 +80,7 @@ def get_request(url, headers, data=None):
 
 
 def read_api(api_request, return_key, *search_pairs):
-    ''' Returns the first value from an API request that matches the maximum number of key/value pairs. '''
+    """ Returns the first value from an API request that matches the maximum number of key/value pairs. """
 
     index = 0  # iteration position of the API dictionary
     maxmatches = 0  # maximum number of dictionary entries matching criteria

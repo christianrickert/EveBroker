@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-'''
+"""
 EveBroker
 Calculate your profit margin from buy to sell orders based on market skills and entity standings.
-Copyright (C) 2018 Christian Rickert <mail@crickert.de>
+Copyright (C) 2019 Christian Rickert <mail@crickert.de>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -20,15 +20,17 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ----------------------------------------------------------------------------------------------------
 Eve Online
-Copyright © CCP hf. <info@ccpgames.com> 1997-2018
-'''
+Copyright © CCP hf. <info@ccpgames.com> 1997-2019
+"""
 
 
 # imports
 
 import base64
+import hashlib
 import os
 import random
+import secrets
 import sys
 import urllib.parse
 import webbrowser
@@ -37,14 +39,14 @@ import ccp_esi
 
 # variables
 
-AUTHOR = "Copyright (C) 2018 Christian Rickert"
+AUTHOR = "Copyright (C) 2019 Christian Rickert"
 DISCLAIMER = "EveBroker is distributed in the hope that it will be useful, but it comes w/o\nany guarantee or warranty.  This program is free software; you can redistribute\nit and/or modify it under the terms of the GNU General Public License:"
 INTERMEDIATELINE = '{0:}'.format("Calculate your profit margin from buy to sell orders based on market skills\nand entity standings. Checks your character's docking location for NPC fees.")
 SEPARBOLD = 79*'='
 SEPARNORM = 79*'-'
 SOFTWARE = "EveBroker"
 URL = "https://www.gnu.org/licenses/gpl-2.0.en.html"
-VERSION = "version 1.0,"  # (2018-05-11)
+VERSION = "version 2.0,"  # (2019-10-20)
 GREETER = '{0:<{w0}}{1:<{w1}}{2:<{w2}}'.format(SOFTWARE, VERSION, AUTHOR, w0=len(SOFTWARE)+1, w1=len(VERSION)+1, w2=len(AUTHOR)+1)
 
 
@@ -78,6 +80,13 @@ def askboolean(dlabel="custom boolean", dval=True):
         else:
             continue
 
+def create_pcke_challenge(random_string=None):
+    """ Returns a Base64 encoded string as PCKE code challenge from a random input string. """
+    string_hash = hashlib.sha256()
+    string_hash.update(random_string)
+    string_hash_digest = string_hash.digest()
+    return base64.urlsafe_b64encode(string_hash_digest).decode().replace("=", "")
+
 
 # main routine
 
@@ -89,48 +98,47 @@ print('{0:^79}'.format(URL) + os.linesep)
 print('{0:^79}'.format(SEPARBOLD) + os.linesep)
 
 # Authenticate with the EVE Swagger Interface
-# For details, see: https://eveonline-third-party-documentation.readthedocs.io/en/latest/sso/
+# For details, see: https://github.com/esi/esi-docs/
 
-# Authentication procedure with SSO
+# Authentication procedure with SSO, OAuth 2.0 flow
 sys.stdout.write(">> Single Sign-On (SSO)... ")
 sys.stdout.flush()
-SSO_URI = "https://login.eveonline.com/oauth/authorize/"
-RESPONSE_TYPE = "code"
+
 REDIRECT_URI = "http://localhost:1234"
 CLIENT_ID = "c7e50f4b47af437280f52739ce26df91"
 SCOPE = "esi-location.read_location.v1 esi-skills.read_skills.v1 esi-wallet.read_character_wallet.v1 esi-characters.read_standings.v1"
-SECRET_KEY = "nMkEVIYrIkjTBN6g5M2m1lcxrtoDRA2eRMg6Onr8" # super secret
-AUTH_CODE = ""
 
 try:
     while True:  # interval defined by listener timeout
         try:
             # Redirect user to the authorization site to log in
+            VERIFIER = base64.urlsafe_b64encode(secrets.token_bytes(32))  # we need this for later
+            CHALLENGE = create_pcke_challenge(VERIFIER)
             STATE = str(random.getrandbits(32))
-            SSO_URL = SSO_URI + "?response_type=" + RESPONSE_TYPE + "&redirect_uri=" + REDIRECT_URI + "&client_id=" + CLIENT_ID + "&scope=" + SCOPE + "&state=" + STATE
+            SSO_URI = "https://login.eveonline.com/v2/oauth/authorize/"
+            SSO_URL = SSO_URI + "?response_type=code" + "&redirect_uri=" + REDIRECT_URI + "&client_id=" + CLIENT_ID + "&scope=" + SCOPE + "&code_challenge=" + CHALLENGE + "&code_challenge_method=S256" + "&state=" + STATE
             webbrowser.open(SSO_URL, new=2, autoraise=True)
 
             # Start local server to listen for callback, i.e. receive the authorization code
             ADDRESS = "localhost"
             PORT = 1234
-            AUTH_CODE = ccp_esi.get_listener(ADDRESS, PORT)[11:76]
+            AUTH_CODE = ccp_esi.get_listener(ADDRESS, PORT).split('&')[0][11:]
 
             # Request the access token from the remote server by providing the authentication code received earlier
-            AUTH_URL = "https://login.eveonline.com/oauth/token"
-            AUTH_KEY = "Basic " + base64.b64encode((CLIENT_ID + ":" + SECRET_KEY).encode(encoding="utf-8", errors="replace")).decode(encoding="utf-8", errors="replace")
-            AUTH_HEADERS = {'Authorization': AUTH_KEY, 'Content-Type': 'application/x-www-form-urlencoded', 'Host': 'login.eveonline.com'}
-            DATA = {'grant_TYPE': 'authorization_code', 'code': AUTH_CODE}
-            AUTH_RESPONSE = ccp_esi.get_request(AUTH_URL, AUTH_HEADERS, data=DATA)  # access_token, token_type, expires_in, refresh_token
-            AUTH_TOKEN = AUTH_RESPONSE['access_token']
-        except urllib.error.HTTPError:  # communication problem or negative response
-            continue
+            ACC_URL = "https://login.eveonline.com/v2/oauth/token"
+            ACC_HEADERS = {'Content-Type': 'application/x-www-form-urlencoded', 'Host': 'login.eveonline.com'}
+            ACC_DATA = {'grant_type': 'authorization_code', 'client_id': CLIENT_ID, 'code': AUTH_CODE, 'code_verifier': VERIFIER}
+            ACC_RESPONSE = ccp_esi.get_request(ACC_URL, ACC_HEADERS, data=ACC_DATA)  # access_token, expires_in, token_type, refresh_token
+            ACC_TOKEN = ACC_RESPONSE['access_token']
+        except urllib.error.HTTPError as http_error:  # communication failed
+            print(http_error)
         else:
             break
 
     # Redirect to the Single Sign-On and get the character ID
     ID_URL = "https://login.eveonline.com/oauth/verify"
-    ID_KEY = "Bearer " + str(AUTH_TOKEN)
-    ID_HEADERS = {'User-Agent': 'Python-urllib/3.6', 'Authorization': ID_KEY, 'Host': 'login.eveonline.com'}
+    ID_KEY = "Bearer " + str(ACC_TOKEN)
+    ID_HEADERS = {'User-Agent': 'Python-urllib/3.7', 'Authorization': ID_KEY, 'Host': 'login.eveonline.com'}
     ID_RESPONSE = ccp_esi.get_request(ID_URL, ID_HEADERS)  # CharacterID, CharacterName, ExpiresOn, Scopes, TokenType, CharacterOwnerHash
     CHARACTER_ID = ID_RESPONSE['CharacterID']
     sys.stdout.write("\n   SSO: " + str(ID_RESPONSE['CharacterName']) + "\n")
@@ -218,12 +226,12 @@ try:
     FACTION_STANDINGS = ccp_esi.read_api(CHARACTER_STANDINGS, 'standing', ('from_TYPE', 'npc_corp'), ('from_id', STATION_FACTION)) or 0.0
     #FACTION_STANDINGS = apply_skills(FACTION_STANDINGS, 0.04, CONNECTIONS_LEVEL, True, 10.0) # CCP uses raw standings
     sys.stdout.write("Trading skills:" + 2 * "\t" + "    ROOKIE\t        YOU\t        EXPERT" + os.linesep)
-    BROKER_FEE = (3.0 - (0.1 * BROKER_RELATIONS_LEVEL) - (0.03 * FACTION_STANDINGS) - (0.02 * CORPORATION_STANDINGS))/100.0
-    print("Brokers fee:" + 2 * "\t" + "  {: >9.4%}\t    {: >9.4%}\t      {: >9.4%}".format(0.03, BROKER_FEE, 0.02))
+    BROKER_FEE = (5.0 - (0.3 * BROKER_RELATIONS_LEVEL) - (0.03 * FACTION_STANDINGS) - (0.02 * CORPORATION_STANDINGS))/100.0
+    print("Brokers fee:" + 2 * "\t" + "  {: >9.4%}\t    {: >9.4%}\t      {: >9.4%}".format(0.05, BROKER_FEE, 0.03))
     MARGIN_FEE = apply_skills(1.0, -0.25, MARGIN_TRADING_LEVEL)
     print("Margin Trading fee:\t  {: >9.4%}\t    {: >9.4%}\t      {: >9.4%}".format(1.000000, MARGIN_FEE, 0.237305))
-    TRANSACTION_TAX = 0.02 - (0.01 / 5.00) * ACCOUNTING_LEVEL
-    print("Transaction tax:\t  {: >9.4%}\t    {: >9.4%}\t      {: >9.4%}".format(0.02, TRANSACTION_TAX, 0.01))
+    TRANSACTION_TAX = apply_skills(0.05, -0.11, ACCOUNTING_LEVEL)
+    print("Transaction tax:\t  {: >9.4%}\t    {: >9.4%}\t      {: >9.4%}".format(0.05, TRANSACTION_TAX, 0.0225))
 
     # Calculate margin
     while True:
