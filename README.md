@@ -23,5 +23,5 @@ There is currently no route provided by the [ESI](https://esi.evetech.net/ui/) t
 ## Development & Bug reporting
 If you would like to participate in the development of EveBroker, please [fork this repository](https://help.github.com/articles/fork-a-repo) to your GitHub account. In order to report a problem with EveBroker, please login to your GitHub account and create a [new issue](https://help.github.com/articles/creating-an-issue/) in this repository.
 
-Your feedback is welcome! Please contact us using [GitHub](https://github.com/crickert1234/) or via [e-mail](mailto:mail@crickert.de).
+Your feedback is welcome! Please contact us using [GitHub](https://github.com/crickert1234/) or via [e-mail](mailto:rc.email@icloud.com).
 
